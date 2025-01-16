@@ -7,7 +7,9 @@
 #include <ostream>
 #include <string>
 #include <string_view>
-#include <vector>
+#include "xml.cpp"
+
+// Michaił Bachtin
 
 class FileSystemResource {
 public:
@@ -18,69 +20,16 @@ class File : public FileSystemResource {
 protected:
   std::string_view m_filename;
   File(std::string_view filename) : m_filename{filename} {};
-};
-
-class XMLTag {
-protected:
-  std::string_view m_name;
-  std::map<std::string_view, std::string_view> m_attributes;
-  std::vector<std::unique_ptr<XMLTag>> m_children;
-
 public:
-  XMLTag(std::string_view name,
-         std::map<std::string_view, std::string_view> attributes,
-         std::vector<std::unique_ptr<XMLTag>> children = {})
-      : m_name{name}, m_attributes{attributes}, m_children{children} {};
-  XMLTag(std::string_view name,
-         std::vector<std::unique_ptr<XMLTag>> children = {})
-      : m_name{name}, m_attributes{{}}, m_children{children} {};
-
-  friend std::ostream &operator<<(std::ostream &stream, const XMLTag &tag);
-  friend const std::string toString(const XMLTag &tag);
+  virtual void write() = 0;
 };
-
-const std::string toString(const XMLTag &tag) {
-  std::string res = "<" + std::string{tag.m_name};
-  for (auto [key, value] : tag.m_attributes)
-    res += " " + std::string{key} + "=\"" + std::string{value} + "\"";
-  if (tag.m_children.empty())
-    return res + " />\n";
-  res += ">";
-  for (auto i{tag.m_children.begin()}; i != tag.m_children.end(); i++)
-    res += toString(**i);
-  return res + "</" + std::string{tag.m_name} + ">\n";
-}
-
-std::ostream &operator<<(std::ostream &stream, const XMLTag &tag) {
-  return stream << toString(tag);
-}
-
-class XMLStringTag : public XMLTag {
-  std::string_view m_contents;
-
-public:
-  XMLStringTag(std::string_view name,
-               std::map<std::string_view, std::string_view> attributes,
-               std::string_view contents)
-      : XMLTag{name, attributes}, m_contents{contents} {};
-  XMLStringTag(std::string_view name, std::string_view contents)
-      : XMLTag{name}, m_contents{contents} {};
-  friend const std::string toString(const XMLStringTag &tag);
-};
-
-const std::string toString(const XMLStringTag &tag) {
-  std::string res = "<" + std::string{tag.m_name};
-  for (auto [key, value] : tag.m_attributes)
-    res += " " + std::string{key} + "=\"" + std::string{value} + "\"";
-  return res + ">" + std::string{tag.m_contents} + "</" +
-         std::string{tag.m_name} + ">\n";
-}
 
 class XMLFile : public File {
-  XMLTag m_body;
+protected:
+  XMLTag* m_body;
 
 public:
-  XMLFile(std::string_view filename, XMLTag body)
+  XMLFile(std::string_view filename, XMLTag* body)
       : File(filename), m_body{body} {};
   void write() {
     std::ofstream stream;
@@ -93,7 +42,7 @@ public:
 
 std::ostream &operator<<(std::ostream &stream, XMLFile &file) {
   stream << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << "\n";
-  stream << file.m_body;
+  stream << file.m_body->to_string();
   return stream;
 }
 
@@ -102,22 +51,16 @@ public:
   ContainerFile()
       : XMLFile(
             "META-INF/container.xml",
-            XMLTag(
+            new XMLTag(
                 "container",
                 {{"xmlns", "urn:oasis:names:tc:opendocument:xmlns:container"},
                  {"version", "1.0"}},
-                {std::make_unique<XMLTag>(
-                    "rootfiles",
-                    std::vector<std::unique_ptr<XMLTag>>{
-                        std::make_unique<XMLTag>(
-                            "rootfile",
-                            std::map<std::string_view, std::string_view>{
-                                {"full-path", "EPUB/package.opf"},
-                                {"media-type",
-                                 "application/oebps-package+xml"}})})})) {
-
-        };
-};
+                 {
+                  new XMLTag("rootfiles", {}, 
+                    {
+                      new XMLTag("rootfile", {{"full-path", "EPUB/package.opf"}, {"media-type", "application/oebps-package+xml"}})})
+                  })){
+};};
 
 class Meta : FileSystemResource {
   ContainerFile m_container;
@@ -130,46 +73,38 @@ public:
   };
 };
 
-class ManifestItem : XMLTag {
+class ManifestItem : XMLTag{
   // properties??
-  ManifestItem(std::string href, std::string id, std::string type)
-      : XMLTag("item", {{"href", href}, {"id", id}, {"media-type", type}}) {};
+  public:
+    ManifestItem(std::string href, std::string id, std::string type) : 
+      XMLTag("item", {{"href", href}, {"id", id}, {"media-type", type}}){}
 };
 
-class SpineItem : XMLTag {
+class SpineItem : XMLTag{
   // linear??
-  SpineItem(std::string id) : XMLTag{"itemref", {{"idref", id}}} {};
+  public:
+    SpineItem(std::string id) : XMLTag("itemref", {{"idref", id}}){};
 };
 
 class PackageFile : public XMLFile {
 public:
-  PackageFile(std::string_view id, std::string_view title,
-              std::string_view creator, std::string_view language,
-              std::vector<std::unique_ptr<XMLTag>> manifest,
-              std::vector<std::unique_ptr<XMLTag>> spine)
+  PackageFile(std::string id, std::string title,
+              std::string creator, std::string language,
+              std::vector<XMLTag*> manifest, std::vector<XMLTag*> spine)
       : XMLFile( // dcterms:modified ??
             "EPUB/package.opf",
-            XMLTag(
-                "package",
-                {{"xmlns", "http://www.idpf.org/2007/opf"},
-                 {"version", "3.0"},
-                 {"unique-identifier", "uid"}},
-                {std::make_unique<XMLTag>(
-                     "metadata",
-                     std::map<std::string_view, std::string_view>{
-                         {"xmlns:dc", "http://purl.org/dc/elements/1.1/"}},
-                     std::vector<std::unique_ptr<XMLTag>>{
-                         std::make_unique<XMLStringTag>(
-                             "dc:identifier",
-                             std::map<std::string_view, std::string_view>{
-                                 {"id", "uid"}},
-                             id),
-                         std::make_unique<XMLStringTag>("dc:title", title),
-                         std::make_unique<XMLStringTag>("dc:creator", creator),
-                         std::make_unique<XMLStringTag>("dc:language",
-                                                        language)}),
-                 std::make_unique<XMLTag>("manifest", manifest),
-                 std::make_unique<XMLTag>("spine", spine)})) {}
+            new XMLTag("package",
+                   {{"xmlns", "http://www.idpf.org/2007/opf"},
+                    {"version", "3.0"},
+                    {"unique-identifier", "uid"}},
+                   {new XMLTag("metadata",
+                           {{"xmlns:dc", "http://purl.org/dc/elements/1.1/"}},
+                           {new XMLStringTag("dc:identifier", {{"id", "uid"}}, id),
+                            new XMLStringTag("dc:title", {}, title),
+                            new XMLStringTag("dc:creator", {}, creator),
+                            new XMLStringTag("dc:language", {}, language)}),
+                    new XMLTag("manifest", {}, manifest),
+                    new XMLTag("spine", {}, spine)})) {}
 };
 
 class ContentFile : public File {
