@@ -3,25 +3,39 @@
 #include <fstream>
 #include <iostream>
 #include <map>
-#include <memory>
 #include <ostream>
 #include <string>
-#include <string_view>
 #include "xml.cpp"
+#include "util.cpp"
 
 // Michaił Bachtin
 
 class FileSystemResource {
+protected:
+  FileSystemResource(std::string name) : m_name{name}{};
 public:
+  std::string m_name;
   virtual void write() = 0;
 };
 
 class File : public FileSystemResource {
+protected: 
+  File(std::string name) : FileSystemResource{name}{};
+};
+
+class Folder : public FileSystemResource {
 protected:
-  std::string_view m_filename;
-  File(std::string_view filename) : m_filename{filename} {};
+  std::vector<FileSystemResource*> m_files;
+  Folder(std::string name, std::vector<FileSystemResource*> files = {}) : FileSystemResource{name}, m_files{files}{};
 public:
-  virtual void write() = 0;
+  virtual void write() override {
+    std::cout << "writing " << m_name << "\n";
+    system(("mkdir -p " + m_name).c_str());
+    for (auto file : m_files) {
+      std::cout << "writing " << file->m_name << "\n";
+      file->write();
+    }
+  }
 };
 
 class XMLFile : public File {
@@ -29,11 +43,11 @@ protected:
   XMLTag* m_body;
 
 public:
-  XMLFile(std::string_view filename, XMLTag* body)
-      : File(filename), m_body{body} {};
+  XMLFile(std::string name, XMLTag* body)
+      : File{name}, m_body{body} {};
   void write() {
     std::ofstream stream;
-    stream.open(std::string{m_filename});
+    stream.open(m_name);
     stream << *this;
     stream.close();
   }
@@ -62,25 +76,19 @@ public:
                   })){
 };};
 
-class Meta : FileSystemResource {
-  ContainerFile m_container;
-
+class Meta : public Folder {
 public:
-  Meta(ContainerFile container) : m_container{container} {};
-  void write() {
-    system("mkdir -p META-INF");
-    m_container.write();
-  };
+  Meta(ContainerFile* container) : Folder{"META-INF", {container}} {};
 };
 
-class ManifestItem : XMLTag{
+class ManifestItem : public XMLTag{
   // properties??
   public:
     ManifestItem(std::string href, std::string id, std::string type) : 
       XMLTag("item", {{"href", href}, {"id", id}, {"media-type", type}}){}
 };
 
-class SpineItem : XMLTag{
+class SpineItem : public XMLTag{
   // linear??
   public:
     SpineItem(std::string id) : XMLTag("itemref", {{"idref", id}}){};
@@ -102,58 +110,58 @@ public:
                            {new XMLStringTag("dc:identifier", {{"id", "uid"}}, id),
                             new XMLStringTag("dc:title", {}, title),
                             new XMLStringTag("dc:creator", {}, creator),
-                            new XMLStringTag("dc:language", {}, language)}),
+                            new XMLStringTag("dc:language", {}, language),
+                            new XMLStringTag("meta", {{"property", "dcterms:modified"}}, now())}),
                     new XMLTag("manifest", {}, manifest),
                     new XMLTag("spine", {}, spine)})) {}
 };
 
 class ContentFile : public File {
-  std::string_view m_content;
+  std::string m_content;
 
 public:
-  ContentFile(std::string_view filename, std::string_view content)
-      : File(filename), m_content{content} {};
+  ContentFile(std::string name, std::string content)
+      : File("EPUB/" + name), m_content{content} {};
   void write() {
     std::ofstream stream;
-    stream.open(std::string{m_filename});
+    stream.open(m_name);
     stream << m_content;
     stream.close();
   };
 };
 
-class Content : FileSystemResource {
-  PackageFile m_package;
-  FileSystemResource &m_content;
-
+class Content : public Folder {
 public:
-  Content(PackageFile package, FileSystemResource &content)
-      : m_package{package}, m_content{content} {};
-  void write() {
-    system("mkdir -p EPUB");
-    m_package.write();
-    m_content.write();
-  }
+  Content(PackageFile * package, std::vector<FileSystemResource*> content)
+      : Folder{"EPUB", content} {
+        m_files.push_back(package);
+      };
 };
 
-class Epub : FileSystemResource {
+class Epub : File {
   Meta m_meta;
   Content m_content;
 
 public:
-  Epub(Meta meta, Content content) : m_meta{meta}, m_content{content} {};
-  void write() {
+  Epub(std::string name, Meta meta, Content content) : File{name}, m_meta{meta}, m_content{content} {};
+  void write() override {
     m_meta.write();
     m_content.write();
     system("echo application/epub+zip > mimetype");
+    std::string zip = "zip " + m_name + ".epub -r " + m_meta.m_name + " " + m_content.m_name + " mimetype";
+    system(zip.c_str());
+    std::string rm = "rm -r mimetype " + m_meta.m_name + " " + m_content.m_name;
+    system(rm.c_str());
   };
 };
 
 int main() {
-  Meta meta{ContainerFile{}};
-  ContentFile file = ContentFile{"EPUB/plik", "<html></html>"};
-  Content content =
-      Content(PackageFile("1", "tytuł", "autor", "pl", {}, {}), file);
-  Epub epub = Epub(meta, content);
-  epub.write();
+  Meta meta{new ContainerFile()};
+  ContentFile * file = new ContentFile{"plik.xhtml", "<?xml version=\"1.0\" encoding=\"utf-8\"?><html xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta charset=\"utf-8\"/><title>EPUB 3.0 Specification</title><link rel=\"stylesheet\" type=\"text/css\" href=\"../css/epub-spec.css\"/></head><body><h1 class=\"titlepage\">EPUB 3.0 Specification</h1>        <p><em>The documents canonically located at <a href=\"http://idpf.org/epub/30\">http://idpf.org/epub/30</a> reproduced in EPUB 3 format</em></p>        <div class=\"legalnotice\"><p>All rights reserved. This work is protected under Title 17 of the United States Code. Reproduction and dissemination of this work with changes is prohibited except with the written permission of the <a href=\"http://www.idpf.org\">International Digital Publishing Forum (IDPF)</a>. </p><p>EPUB is a registered trademark of the International Digital Publishing Forum.</p></div></body></html>"};
+  Content content{new PackageFile("1", "tytuł", "autor", "pl",
+            {new ManifestItem("plik.xhtml", "ttl", "application/xhtml+xml")}, 
+            {new SpineItem( "ttl")}), {file}};
+  Epub epub{"test", meta, content};
+  epub.write(); 
   return 0;
 }

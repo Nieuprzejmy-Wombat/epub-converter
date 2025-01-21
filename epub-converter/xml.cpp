@@ -18,11 +18,7 @@ public:
   XMLTag(std::string name,
          std::map<std::string, std::string> attributes,
          std::vector<XMLTag*> children)
-      : m_name{name}, m_attributes{attributes}, m_children{} {
-        for (auto it = children.begin(); it != children.end(); it++) {
-          m_children.push_back(*it);
-        }
-      };
+      : m_name{name}, m_attributes{attributes}, m_children{children} {};
   virtual const std::string to_string() {
       std::string res = "<" + m_name;
       for (auto [key, value] : m_attributes)
@@ -30,8 +26,8 @@ public:
       if (m_children.empty())
         return res + "/>\n";
       res += ">";
-      for (auto it = m_children.begin(); it != m_children.end(); it++)
-        res += (*it)->to_string();
+      for (auto it : m_children)
+        res += it->to_string();
       return res + "</" + m_name + ">\n";
   }
   friend std::ostream &operator<<(std::ostream &stream, XMLTag &tag);
@@ -55,11 +51,5 @@ public:
         res += " " + key + "=\"" + value + "\"";
       return res + ">" + m_contents + "</" + m_name + ">\n";
   }
-  friend std::ostream &operator<<(std::ostream &stream,
-                                   XMLStringTag &tag);
 };
-
-std::ostream &operator<<(std::ostream &stream, XMLStringTag &tag) {
-  return stream << tag.to_string();
-}
 
