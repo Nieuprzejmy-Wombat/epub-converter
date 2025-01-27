@@ -3,8 +3,8 @@
 #include <fstream>
 #include <map>
 #include <string>
-#include "util.cpp"
-#include "filesystem.cpp"
+#include "util.hpp"
+#include "filesystem.hpp"
 #include "epub.hpp"
 
 // Michaił Bachtin
