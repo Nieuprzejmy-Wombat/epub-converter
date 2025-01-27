@@ -5,4 +5,4 @@
 
 std::string now();
 
-#endif 
+#endif

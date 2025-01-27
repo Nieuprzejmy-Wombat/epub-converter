@@ -1,5 +1,6 @@
 #include <ctime>
 #include <string>
+#include "util.hpp"
 
 std::string now(){
   time_t now;

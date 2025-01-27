@@ -1,25 +1,21 @@
 #include <map>
-#include <memory>
 #include <vector>
 #include <ostream>
 #include <iostream>
 #include <cstdio>
 #include <cstdlib>
+#include "xml.hpp"
 
-class XMLTag {
-public:
-  std::string m_name;
-  std::map<std::string, std::string> m_attributes;
-  std::vector<XMLTag*> m_children;
-
-  XMLTag(std::string name,
-         std::map<std::string, std::string> attributes = {})
+XMLTag::XMLTag(std::string name,
+         std::map<std::string, std::string> attributes)
       : m_name{name}, m_attributes{attributes}, m_children{std::vector<XMLTag*>{}} {};
-  XMLTag(std::string name,
+
+XMLTag::XMLTag(std::string name,
          std::map<std::string, std::string> attributes,
          std::vector<XMLTag*> children)
       : m_name{name}, m_attributes{attributes}, m_children{children} {};
-  virtual const std::string to_string() {
+
+const std::string XMLTag::to_string() {
       std::string res = "<" + m_name;
       for (auto [key, value] : m_attributes)
         res += " " + key + "=\"" + value + "\"";
@@ -29,27 +25,20 @@ public:
       for (auto it : m_children)
         res += it->to_string();
       return res + "</" + m_name + ">\n";
-  }
-  friend std::ostream &operator<<(std::ostream &stream, XMLTag &tag);
-};
+}
 
 std::ostream &operator<<(std::ostream &stream, XMLTag &tag) {
   return stream << tag.to_string();
 }
 
-class XMLStringTag : public XMLTag {
-  std::string m_contents;
-
-public:
-  XMLStringTag(std::string name,
+XMLStringTag::XMLStringTag(std::string name,
                std::map<std::string, std::string> attributes,
                std::string contents)
       : XMLTag(name, attributes), m_contents{contents} {};
-  const std::string to_string() override {
+
+const std::string XMLStringTag::to_string() {
       std::string res = "<" + m_name;
       for (auto [key, value] : m_attributes)
         res += " " + key + "=\"" + value + "\"";
       return res + ">" + m_contents + "</" + m_name + ">\n";
-  }
-};
-
+}
