@@ -33,6 +33,13 @@ public:
   Nav(NavType type, XMLTag *title, OrderedList *list);
 };
 
-std::vector<XMLTag *> upcast(const std::vector<ListItem *> &items);
+template <typename T>
+std::vector<XMLTag *> upcast(const std::vector<T *> &items) {
+  std::vector<XMLTag *> res;
+  for (auto it : items) {
+    res.push_back(it);
+  }
+  return res;
+}
 
 #endif

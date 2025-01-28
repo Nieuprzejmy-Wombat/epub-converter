@@ -27,7 +27,8 @@ class PackageFile : public XMLFile {
 public:
   PackageFile(std::string id, std::string title, std::string creator,
               std::string language, XHTMLAdapter *nav,
-              std::vector<XMLTag *> manifest, std::vector<XMLTag *> spine);
+              std::vector<ManifestItem *> manifest,
+              std::vector<SpineItem *> spine);
 };
 
 class ContentFile : public File {

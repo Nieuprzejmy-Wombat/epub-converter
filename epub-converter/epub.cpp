@@ -35,8 +35,8 @@ SpineItem::SpineItem(std::string id) : XMLTag("itemref", {{"idref", id}}) {};
 
 PackageFile::PackageFile(std::string id, std::string title, std::string creator,
                          std::string language, XHTMLAdapter *nav,
-                         std::vector<XMLTag *> manifest,
-                         std::vector<XMLTag *> spine)
+                         std::vector<ManifestItem *> manifest,
+                         std::vector<SpineItem *> spine)
     : XMLFile(
           "EPUB/package.opf",
           new XMLTag(
@@ -53,7 +53,8 @@ PackageFile::PackageFile(std::string id, std::string title, std::string creator,
                     new XMLStringTag("dc:language", language),
                     new XMLStringTag("meta", {{"property", "dcterms:modified"}},
                                      now())}),
-               new XMLTag("manifest", manifest), new XMLTag("spine", spine)})) {
+               new XMLTag("manifest", upcast(manifest)),
+               new XMLTag("spine", upcast(spine))})) {
   XMLTag *nav_man =
       new ManifestItem(nav->m_name, "nav", "application/xhtml+xml");
   XMLTag *man = m_body->m_children[1];

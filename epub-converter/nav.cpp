@@ -39,11 +39,3 @@ OrderedList::OrderedList(std::map<std::string, std::string> attributes,
     : XMLTag("ol", attributes, upcast(items)) {};
 OrderedList::OrderedList(std::vector<ListItem *> items)
     : XMLTag("ol", upcast(items)) {};
-
-std::vector<XMLTag *> upcast(const std::vector<ListItem *> &items) {
-  std::vector<XMLTag *> res;
-  for (auto it : items) {
-    res.push_back(it);
-  }
-  return res;
-}
