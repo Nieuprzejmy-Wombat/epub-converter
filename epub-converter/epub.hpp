@@ -26,7 +26,7 @@ class SpineItem : public XMLTag{
 class PackageFile : public XMLFile {
 public:
   PackageFile(std::string id, std::string title,
-              std::string creator, std::string language,
+              std::string creator, std::string language, XHTMLAdapter * nav,
               std::vector<XMLTag*> manifest, std::vector<XMLTag*> spine);
 };
 
@@ -35,6 +35,7 @@ class ContentFile : public File {
 
 public:
   ContentFile(std::string name, std::string content);
+  ContentFile(XHTMLAdapter xhtml_file);
   void write();
 };
 

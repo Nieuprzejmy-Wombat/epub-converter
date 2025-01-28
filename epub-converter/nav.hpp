@@ -1,16 +1,16 @@
 #ifndef NAV_HPP
 #define NAV_HPP
 
-#include "filesystem.hpp"
+#include "xml.hpp"
 #include <string>
 
 enum NavType {toc, pagelist, landmarks};
 
 const std::string to_string(NavType type);
 
-class Link : public XMLStringTag {
+class Anchor : public XMLStringTag {
 public:
-  Link(std::string href, std::string caption, std::map<std::string, std::string> attributes = {});
+  Anchor(std::string href, std::string caption, std::map<std::string, std::string> attributes = {});
 };
 
 class ListItem;
@@ -23,10 +23,10 @@ public:
 
 class ListItem : public XMLTag {
 public:
-  ListItem(Link * link, OrderedList * nested_list = nullptr);
+  ListItem(Anchor * anchor, OrderedList * nested_list = nullptr);
 };
 
-class Nav : XMLFile {
+class Nav : public XMLTag {
 public:
   Nav(NavType type, XMLTag * title, OrderedList * list);
 };

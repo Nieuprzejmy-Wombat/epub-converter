@@ -27,15 +27,19 @@ public:
 };
 
 class XMLFile : public File {
-protected:
-  XMLTag* m_body;
-
 public:
+  XMLTag* m_body;
   XMLFile(std::string name, XMLTag* body);
   void write();
+  std::string to_string();
   friend std::ostream &operator<<(std::ostream &stream, XMLFile &file);
 };
 
 std::ostream &operator<<(std::ostream &stream, XMLFile &file);
+
+class XHTMLAdapter : public XMLFile {
+public:
+  XHTMLAdapter(std::string title, std::vector<std::string> stylesheets, XMLTag * html_body);
+};
 
 #endif
