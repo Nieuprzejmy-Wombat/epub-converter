@@ -10,24 +10,24 @@ public:
 
 class Meta : public Folder {
 public:
-  Meta(ContainerFile* container);
+  Meta(ContainerFile *container);
 };
 
-class ManifestItem : public XMLTag{
-  public:
-    ManifestItem(std::string href, std::string id, std::string type);
+class ManifestItem : public XMLTag {
+public:
+  ManifestItem(std::string href, std::string id, std::string type);
 };
 
-class SpineItem : public XMLTag{
-  public:
-    SpineItem(std::string id);
+class SpineItem : public XMLTag {
+public:
+  SpineItem(std::string id);
 };
 
 class PackageFile : public XMLFile {
 public:
-  PackageFile(std::string id, std::string title,
-              std::string creator, std::string language, XHTMLAdapter * nav,
-              std::vector<XMLTag*> manifest, std::vector<XMLTag*> spine);
+  PackageFile(std::string id, std::string title, std::string creator,
+              std::string language, XHTMLAdapter *nav,
+              std::vector<XMLTag *> manifest, std::vector<XMLTag *> spine);
 };
 
 class ContentFile : public File {
@@ -41,7 +41,7 @@ public:
 
 class Content : public Folder {
 public:
-  Content(PackageFile * package, std::vector<FileSystemResource*> content);
+  Content(PackageFile *package, std::vector<FileSystemResource *> content);
 };
 
 class Epub : File {
