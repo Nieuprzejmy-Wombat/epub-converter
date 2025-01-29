@@ -13,9 +13,13 @@ public:
   Meta(ContainerFile *container);
 };
 
+class ContentFile;
+
 class ManifestItem : public XMLTag {
 public:
-  ManifestItem(std::string href, std::string id, std::string type);
+  ManifestItem(std::string href, std::string id,
+               std::string mimetype = "application/xhtml+xml");
+  ManifestItem(std::string id, ContentFile &file);
 };
 
 class SpineItem : public XMLTag {
@@ -33,10 +37,13 @@ public:
 
 class ContentFile : public File {
   std::string m_content;
+  std::string m_mimetype;
 
 public:
-  ContentFile(std::string name, std::string content);
+  ContentFile(std::string name, std::string content,
+              std::string mimetype = "application/xhtml+xml");
   ContentFile(XHTMLAdapter xhtml_file);
+  const std::string &mimetype();
   void write();
 };
 

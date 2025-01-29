@@ -7,22 +7,23 @@
 
 class FileSystemResource {
 protected:
-  FileSystemResource(std::string name);
+  FileSystemResource(std::string path);
 
 public:
-  std::string m_name;
+  std::string m_path;
   virtual void write() = 0;
+  std::string const filename();
 };
 
 class File : public FileSystemResource {
 protected:
-  File(std::string name);
+  File(std::string path);
 };
 
 class Folder : public FileSystemResource {
 protected:
   std::vector<FileSystemResource *> m_files;
-  Folder(std::string name, std::vector<FileSystemResource *> files = {});
+  Folder(std::string path, std::vector<FileSystemResource *> files = {});
 
 public:
   virtual void write() override;
@@ -31,7 +32,7 @@ public:
 class XMLFile : public File {
 public:
   XMLTag *m_body;
-  XMLFile(std::string name, XMLTag *body);
+  XMLFile(std::string path, XMLTag *body);
   void write();
   std::string to_string();
   friend std::ostream &operator<<(std::ostream &stream, XMLFile &file);
@@ -41,7 +42,7 @@ std::ostream &operator<<(std::ostream &stream, XMLFile &file);
 
 class XHTMLAdapter : public XMLFile {
 public:
-  XHTMLAdapter(std::string title, std::vector<std::string> stylesheets,
+  XHTMLAdapter(std::string path, std::vector<std::string> stylesheets,
                XMLTag *html_body);
 };
 
