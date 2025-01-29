@@ -19,8 +19,8 @@ XMLTag::XMLTag(std::string name, std::map<std::string, std::string> attributes,
 
 const std::string XMLTag::to_string() {
   std::string res = "<" + m_name;
-  for (auto [key, value] : m_attributes)
-    res += " " + key + "=\"" + value + "\"";
+  for (auto attr : m_attributes)
+    res += " " + attr.first + "=\"" + attr.second + "\"";
   if (m_children.empty())
     return res + "/>\n";
   res += ">";
@@ -44,8 +44,8 @@ XMLStringTag::XMLStringTag(std::string name, std::string contents)
 
 const std::string XMLStringTag::to_string() {
   std::string res = "<" + m_name;
-  for (auto [key, value] : m_attributes)
-    res += " " + key + "=\"" + value + "\"";
+  for (auto attr : m_attributes)
+    res += " " + attr.first + "=\"" + attr.second + "\"";
   res = res + ">" + m_contents + "</" + m_name + ">\n";
   return res;
 };
