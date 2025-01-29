@@ -16,6 +16,10 @@ public:
 };
 
 class File : public FileSystemResource {
+public:
+  virtual std::string contents() = 0;
+  virtual void write() override;
+
 protected:
   File(std::string path);
 };
@@ -29,21 +33,27 @@ public:
   virtual void write() override;
 };
 
+class ContentFile : public File {
+  std::string m_mimetype;
+
+public:
+  ContentFile(std::string path, std::string mimetype = "application/xhtml+xml");
+  const std::string &mimetype();
+};
+
 class XMLFile : public File {
 public:
   XMLTag *m_body;
   XMLFile(std::string path, XMLTag *body);
-  void write();
-  std::string to_string();
-  friend std::ostream &operator<<(std::ostream &stream, XMLFile &file);
+  std::string contents() override;
 };
 
-std::ostream &operator<<(std::ostream &stream, XMLFile &file);
-
-class XHTMLAdapter : public XMLFile {
+class XHTMLFile : public ContentFile {
 public:
-  XHTMLAdapter(std::string path, std::vector<std::string> stylesheets,
-               XMLTag *html_body);
+  XMLTag *m_body;
+  XHTMLFile(std::string path, std::vector<std::string> stylesheets,
+            XMLTag *html_body);
+  std::string contents() override;
 };
 
 #endif

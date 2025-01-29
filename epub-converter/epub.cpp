@@ -5,7 +5,6 @@
 #include "xml.hpp"
 #include <cstdio>
 #include <cstdlib>
-#include <fstream>
 #include <map>
 #include <string>
 
@@ -27,9 +26,6 @@ ContainerFile::ContainerFile()
 Meta::Meta(ContainerFile *container) : Folder{"META-INF", {container}} {};
 
 // properties??
-ManifestItem::ManifestItem(std::string href, std::string id,
-                           std::string mimetype)
-    : XMLTag("item", {{"href", href}, {"id", id}, {"media-type", mimetype}}) {}
 ManifestItem::ManifestItem(std::string id, ContentFile &file)
     : XMLTag("item", {{"href", file.filename()},
                       {"id", id},
@@ -39,7 +35,7 @@ ManifestItem::ManifestItem(std::string id, ContentFile &file)
 SpineItem::SpineItem(std::string id) : XMLTag("itemref", {{"idref", id}}) {};
 
 PackageFile::PackageFile(std::string id, std::string title, std::string creator,
-                         std::string language, XHTMLAdapter *nav,
+                         std::string language, XHTMLFile *nav,
                          std::vector<ManifestItem *> manifest,
                          std::vector<SpineItem *> spine)
     : XMLFile(
@@ -60,28 +56,11 @@ PackageFile::PackageFile(std::string id, std::string title, std::string creator,
                                      now())}),
                new XMLTag("manifest", upcast(manifest)),
                new XMLTag("spine", upcast(spine))})) {
-  XMLTag *nav_man = new ManifestItem(nav->filename(), "nav");
+  XMLTag *nav_man = new ManifestItem("nav", *nav);
   XMLTag *man = m_body->m_children[1];
   man->m_children.push_back(nav_man);
   nav_man->m_attributes.insert({"properties", "nav"});
 }
-
-ContentFile::ContentFile(std::string name, std::string content,
-                         std::string mimetype)
-    : File("EPUB/" + name), m_content{content}, m_mimetype{mimetype} {};
-
-ContentFile::ContentFile(XHTMLAdapter xhtml_file)
-    : File("EPUB/" + xhtml_file.m_path), m_content{xhtml_file.to_string()},
-      m_mimetype{"application/xhtml+xml"} {};
-
-const std::string &ContentFile::mimetype() { return m_mimetype; };
-
-void ContentFile::write() {
-  std::ofstream stream;
-  stream.open(m_path);
-  stream << m_content;
-  stream.close();
-};
 
 Content::Content(PackageFile *package,
                  std::vector<FileSystemResource *> content)
@@ -89,8 +68,8 @@ Content::Content(PackageFile *package,
   m_files.push_back(package);
 };
 
-Epub::Epub(std::string name, Meta meta, Content content)
-    : File{name}, m_meta{meta}, m_content{content} {};
+Epub::Epub(std::string path, Meta meta, Content content)
+    : File{path}, m_meta{meta}, m_content{content} {};
 
 void Epub::write() {
   m_meta.write();
@@ -105,35 +84,24 @@ void Epub::write() {
   system(rm.c_str());
 };
 
+// a dummy method so Epub won't be an abstract class
+std::string Epub::contents() { return ""; }
+
 int main() {
   Meta meta{new ContainerFile()};
-  ContentFile *file = new ContentFile{
+  XHTMLFile *file = new XHTMLFile{
       "plik.xhtml",
-      "<?xml version=\"1.0\" encoding=\"utf-8\"?><html "
-      "xmlns=\"http://www.w3.org/1999/xhtml\"><head><meta "
-      "charset=\"utf-8\"/><title>EPUB 3.0 Specification</title><link "
-      "rel=\"stylesheet\" type=\"text/css\" "
-      "href=\"plik.css\"/></head><body><h1 class=\"titlepage\">EPUB 3.0 "
-      "Specification</h1>        <p><em>The documents canonically located at "
-      "<a href=\"http://idpf.org/epub/30\">http://idpf.org/epub/30</a> "
-      "reproduced in EPUB 3 format</em></p>        <div "
-      "class=\"legalnotice\"><p>All rights reserved. This work is protected "
-      "under Title 17 of the United States Code. Reproduction and "
-      "dissemination of this work with changes is prohibited except with the "
-      "written permission of the <a href=\"http://www.idpf.org\">International "
-      "Digital Publishing Forum (IDPF)</a>. </p><p>EPUB is a registered "
-      "trademark of the International Digital Publishing "
-      "Forum.</p></div></body></html>"};
-  ContentFile *style = new ContentFile{"plik.css", "", "text/css"};
+      {},
+      new XMLTag("body", {new XMLStringTag("h1", "dummy epub content")})};
   Nav *nav = new Nav(
       toc, new XMLStringTag("h1", "spis treści"),
       new OrderedList({new ListItem(new Anchor("plik.xhtml", "pliczek"))}));
-  XHTMLAdapter *nav_file = new XHTMLAdapter("nav.xhtml", {}, nav);
-  PackageFile *package = new PackageFile(
-      "1", "tytuł", "autor", "pl", nav_file,
-      {new ManifestItem("ttl", *file), new ManifestItem("css", *style)},
-      {new SpineItem("ttl")});
-  Content content{package, {file, style, new ContentFile(*nav_file)}};
+  XHTMLFile *nav_file =
+      new XHTMLFile("nav.xhtml", {}, new XMLTag("body", {nav}));
+  PackageFile *package =
+      new PackageFile("1", "tytuł", "autor", "pl", nav_file,
+                      {new ManifestItem("ttl", *file)}, {new SpineItem("ttl")});
+  Content content{package, {file, nav_file}};
   Epub epub{"test", meta, content};
   epub.write();
   return 0;
