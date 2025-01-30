@@ -88,7 +88,7 @@ void Epub::write() {
 std::string Epub::contents() { return ""; }
 
 int main() {
-  Meta meta{new ContainerFile()};
+  Meta meta{};
   XHTMLFile *file = new XHTMLFile{
       "plik.xhtml",
       {},

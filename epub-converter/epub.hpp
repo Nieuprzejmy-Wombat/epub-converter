@@ -10,7 +10,7 @@ public:
 
 class Meta : public Folder {
 public:
-  Meta(ContainerFile *container);
+  Meta(ContainerFile *container = new ContainerFile{});
 };
 
 class ManifestItem : public XMLTag {
