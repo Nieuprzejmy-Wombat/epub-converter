@@ -1,14 +1,14 @@
 #ifndef NAV_HPP
 #define NAV_HPP
 
-#include "xml.hpp"
+#include "tag.hpp"
 #include <string>
 
 enum NavType { toc, pagelist, landmarks };
 
 const std::string to_string(NavType type);
 
-class Anchor : public XMLStringTag {
+class Anchor : public Tag {
 public:
   Anchor(std::string href, std::string caption,
          std::map<std::string, std::string> attributes = {});
@@ -16,30 +16,21 @@ public:
 
 class ListItem;
 
-class OrderedList : public XMLTag {
+class OrderedList : public Tag {
 public:
   OrderedList(std::map<std::string, std::string> attributes = {},
               std::vector<ListItem *> items = {});
   OrderedList(std::vector<ListItem *> items);
 };
 
-class ListItem : public XMLTag {
+class ListItem : public Tag {
 public:
   ListItem(Anchor *anchor, OrderedList *nested_list = nullptr);
 };
 
-class Nav : public XMLTag {
+class Nav : public Tag {
 public:
-  Nav(NavType type, XMLTag *title, OrderedList *list);
+  Nav(NavType type, Tag *title, OrderedList *list);
 };
-
-template <typename T>
-std::vector<XMLTag *> upcast(const std::vector<T *> &items) {
-  std::vector<XMLTag *> res;
-  for (auto it : items) {
-    res.push_back(it);
-  }
-  return res;
-}
 
 #endif

@@ -1,5 +1,5 @@
 #include "filesystem.hpp"
-#include "xml.hpp"
+#include "tag.hpp"
 #include <fstream>
 #include <string>
 #include <vector>
@@ -7,7 +7,7 @@
 FileSystemResource::FileSystemResource(std::string path) : m_path{path} {};
 
 std::string const FileSystemResource::filename() {
-  size_t split_pos = m_path.find_last_of("/", -1);
+  size_t split_pos = m_path.find_last_of("/");
   return m_path.substr(split_pos + 1);
 };
 
@@ -35,26 +35,29 @@ ContentFile::ContentFile(std::string path, std::string mimetype)
 
 const std::string &ContentFile::mimetype() { return m_mimetype; };
 
-XMLFile::XMLFile(std::string path, XMLTag *body) : File{path}, m_body{body} {};
+XMLFile::XMLFile(std::string path, AbstractTag *body)
+    : File{path}, m_body{body} {};
 
 std::string XMLFile::contents() {
   return "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" + m_body->to_string();
 };
 
-XHTMLFile::XHTMLFile(std::string path, std::vector<std::string> stylesheets,
-                     XMLTag *html_body)
+Link::Link(std::string href)
+    : Tag("link",
+          {{"rel", "stylesheet"}, {"type", "text/css"}, {"href", href}}) {};
+
+// std::vector<Link *> stylesheets
+XHTMLFile::XHTMLFile(std::string path, AbstractTag *html_body)
     : ContentFile{path},
-      m_body{new XMLTag(
-          "html",
-          {{"xmlns", "http://www.w3.org/1999/xhtml"},
-           {"xmlns:epub", "http://www.idpf.org/2007/ops"}},
-          {new XMLTag("head", {new XMLTag("meta", {{"charset", "utf-8"}}),
-                               new XMLStringTag("title", path)}),
-           html_body})} {
-  for (auto i : stylesheets) {
-    m_body->m_children[0]->m_children.push_back(new XMLTag(
-        "link", {{"rel", "stylesheet"}, {"type", "text/css"}, {"href", i}}));
-  }
-};
+      m_body{new Tag("html",
+                     {{"xmlns", "http://www.w3.org/1999/xhtml"},
+                      {"xmlns:epub", "http://www.idpf.org/2007/ops"}},
+                     {new Tag("head",
+                              std::vector<AbstractTag *>{
+                                  new Tag("meta", {{"charset", "utf-8"}}),
+                                  new Tag("title", {new Text(path)})}),
+                      html_body})}
+
+{};
 
 std::string XHTMLFile::contents() { return XMLFile(m_path, m_body).contents(); }

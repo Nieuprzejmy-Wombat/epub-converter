@@ -1,7 +1,7 @@
 #ifndef FILESYSTEM_HPP
 #define FILESYSTEM_HPP
 
-#include "xml.hpp"
+#include "tag.hpp"
 #include <string>
 #include <vector>
 
@@ -43,16 +43,20 @@ public:
 
 class XMLFile : public File {
 public:
-  XMLTag *m_body;
-  XMLFile(std::string path, XMLTag *body);
+  AbstractTag *m_body;
+  XMLFile(std::string path, AbstractTag *body);
   std::string contents() override;
+};
+
+class Link : public Tag {
+public:
+  Link(std::string href);
 };
 
 class XHTMLFile : public ContentFile {
 public:
-  XMLTag *m_body;
-  XHTMLFile(std::string path, std::vector<std::string> stylesheets,
-            XMLTag *html_body);
+  AbstractTag *m_body;
+  XHTMLFile(std::string path, AbstractTag *html_body);
   std::string contents() override;
 };
 

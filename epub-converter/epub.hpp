@@ -13,12 +13,12 @@ public:
   Meta(ContainerFile *container = new ContainerFile{});
 };
 
-class ManifestItem : public XMLTag {
+class ManifestItem : public Tag {
 public:
-  ManifestItem(std::string id, ContentFile &file);
+  ManifestItem(std::string id, ContentFile &file, bool is_nav = false);
 };
 
-class SpineItem : public XMLTag {
+class SpineItem : public Tag {
 public:
   SpineItem(std::string id);
 };
