@@ -44,8 +44,25 @@ ManifestItem::ManifestItem(std::string id, ContentFile &file, bool is_nav)
 // linear??
 SpineItem::SpineItem(std::string id) : Tag("itemref", {{"idref", id}}) {};
 
-PackageFile::PackageFile(std::string id, std::string title, std::string creator,
-                         std::string language, XHTMLFile &nav,
+Metadata::Metadata(std::string id, std::string title, std::string creator,
+                   std::string language, std::string time_modified)
+    : Tag{"metadata", attrs{{"xmlns:dc", "http://purl.org/dc/elements/1.1/"}},
+          children{
+              std::make_shared<Tag>(
+                  "dc:identifier",
+                  std::map<std::string, std::string>{{"id", "uid"}},
+                  children{std::make_shared<Text>(id)}),
+              std::make_shared<Tag>("dc:title",
+                                    children{std::make_shared<Text>(title)}),
+              std::make_shared<Tag>("dc:creator",
+                                    children{std::make_shared<Text>(creator)}),
+              std::make_shared<Tag>("dc:language",
+                                    children{std::make_shared<Text>(language)}),
+              std::make_shared<Tag>(
+                  "meta", attrs{{"property", "dcterms:modified"}},
+                  children{std::make_shared<Text>(time_modified)})}} {};
+
+PackageFile::PackageFile(std::shared_ptr<Metadata> metadata, XHTMLFile &nav,
                          std::vector<std::shared_ptr<ManifestItem>> manifest,
                          std::vector<std::shared_ptr<SpineItem>> spine)
     : XMLFile(
@@ -56,26 +73,7 @@ PackageFile::PackageFile(std::string id, std::string title, std::string creator,
                     {"version", "3.0"},
                     {"unique-identifier", "uid"}},
               children{
-                  std::make_shared<Tag>(
-                      "metadata",
-                      attrs{{"xmlns:dc", "http://purl.org/dc/elements/1.1/"}},
-                      children{
-                          std::make_shared<Tag>(
-                              "dc:identifier",
-                              std::map<std::string, std::string>{{"id", "uid"}},
-                              children{std::make_shared<Text>(id)}),
-                          std::make_shared<Tag>(
-                              "dc:title",
-                              children{std::make_shared<Text>(title)}),
-                          std::make_shared<Tag>(
-                              "dc:creator",
-                              children{std::make_shared<Text>(creator)}),
-                          std::make_shared<Tag>(
-                              "dc:language",
-                              children{std::make_shared<Text>(language)}),
-                          std::make_shared<Tag>(
-                              "meta", attrs{{"property", "dcterms:modified"}},
-                              children{std::make_shared<Text>(now())})}),
+                  metadata,
                   std::make_shared<Tag>(
                       "manifest", upcast<std::shared_ptr<ManifestItem>,
                                          std::shared_ptr<AbstractTag>>(add(
@@ -124,8 +122,9 @@ int main() {
               std::make_shared<Anchor>("plik.xhtml", "pliczek"))}));
   auto nav_file = std::make_shared<XHTMLFile>(
       "nav.xhtml", std::make_shared<Tag>("body", children{nav}));
+  auto metadata = std::make_shared<Metadata>("1", "tytuł", "autor", "pl");
   auto package = std::make_shared<PackageFile>(
-      "1", "tytuł", "autor", "pl", *nav_file,
+      metadata, *nav_file,
       std::vector<std::shared_ptr<ManifestItem>>{
           std::make_shared<ManifestItem>("ttl", *file)},
       std::vector<std::shared_ptr<SpineItem>>{

@@ -2,6 +2,7 @@
 #define EPUB_HPP
 
 #include "filesystem.hpp"
+#include "util.hpp"
 #include <memory>
 
 class ContainerFile : public XMLFile {
@@ -25,10 +26,15 @@ public:
   SpineItem(std::string id);
 };
 
+class Metadata : public Tag {
+public:
+  Metadata(std::string id, std::string title, std::string creator,
+           std::string language, std::string time_modified = now());
+};
+
 class PackageFile : public XMLFile {
 public:
-  PackageFile(std::string id, std::string title, std::string creator,
-              std::string language, XHTMLFile &nav,
+  PackageFile(std::shared_ptr<Metadata> metadata, XHTMLFile &nav,
               std::vector<std::shared_ptr<ManifestItem>> manifest,
               std::vector<std::shared_ptr<SpineItem>> spine);
 };
