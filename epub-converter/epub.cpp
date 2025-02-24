@@ -1,6 +1,5 @@
 #include "epub.hpp"
 #include "filesystem.hpp"
-#include "nav.hpp"
 #include "tag.hpp"
 #include "util.hpp"
 #include <cstdio>
@@ -110,33 +109,3 @@ void Epub::write() {
 
 // a dummy method so Epub won't be an abstract class
 std::string Epub::contents() { return ""; }
-
-int main() {
-  Meta meta{};
-
-  auto file = std::make_shared<XHTMLFile>(
-      "plik.xhtml",
-      std::make_shared<Tag>(
-          "body", children{std::make_shared<Header>("dummy epub content")}));
-  auto file_manifest = std::make_shared<ManifestItem>("ttl", *file);
-
-  auto nav = std::make_shared<Nav>(
-      toc, std::make_shared<Header>("spis treści"),
-      std::make_shared<OrderedList>(
-          std::vector<std::shared_ptr<ListItem>>{std::make_shared<ListItem>(
-              std::make_shared<Anchor>("plik.xhtml", "pliczek"))}));
-  auto nav_file = std::make_shared<XHTMLFile>(
-      "nav.xhtml", std::make_shared<Tag>("body", children{nav}));
-
-  auto metadata = std::make_shared<Metadata>("1", "tytuł", "autor", "pl");
-  auto package = std::make_shared<PackageFile>(
-      metadata, *nav_file,
-      std::vector<std::shared_ptr<ManifestItem>>{file_manifest},
-      std::vector<std::shared_ptr<SpineItem>>{
-          std::make_shared<SpineItem>(*file_manifest)});
-
-  Content content{package, {file, nav_file}};
-  Epub epub{"test", meta, content};
-  epub.write();
-  return 0;
-};

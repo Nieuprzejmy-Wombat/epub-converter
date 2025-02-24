@@ -65,3 +65,7 @@ XHTMLFile::XHTMLFile(std::string path, std::shared_ptr<AbstractTag> html_body)
 {};
 
 std::string XHTMLFile::contents() { return XMLFile(m_path, m_body).contents(); }
+
+TextFile::TextFile(std::string path, std::string contents, std::string mimetype)
+    : ContentFile{path, mimetype}, m_contents{contents} {};
+std::string TextFile::contents() { return m_contents; }

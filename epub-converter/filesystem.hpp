@@ -59,4 +59,12 @@ public:
   std::string contents() override;
 };
 
+class TextFile : public ContentFile {
+public:
+  std::string m_contents;
+  TextFile(std::string path, std::string contents,
+           std::string mimetype = "application/xhtml+xml");
+  std::string contents() override;
+};
+
 #endif
