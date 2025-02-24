@@ -1,4 +1,5 @@
 #include "nav.hpp"
+#include "tag.hpp"
 #include "util.hpp"
 
 const std::string to_string(NavType type) {
@@ -17,7 +18,7 @@ const std::string to_string(NavType type) {
   }
 }
 
-Nav::Nav(NavType type, std::shared_ptr<Tag> title,
+Nav::Nav(NavType type, std::shared_ptr<Header> title,
          std::shared_ptr<OrderedList> list)
     : Tag("nav", {{"epub:type", ::to_string(type)}, {"id", ::to_string(type)}},
           {title, list}) {};
@@ -42,3 +43,7 @@ OrderedList::OrderedList(std::map<std::string, std::string> attributes,
 OrderedList::OrderedList(std::vector<std::shared_ptr<ListItem>> items)
     : Tag("ol", upcast<std::shared_ptr<ListItem>, std::shared_ptr<AbstractTag>>(
                     items)) {};
+
+Header::Header(short level, std::string contents)
+    : Tag("h" + std::to_string(level), {std::make_shared<Text>(contents)}) {};
+Header::Header(std::string contents) : Header(1, contents) {};

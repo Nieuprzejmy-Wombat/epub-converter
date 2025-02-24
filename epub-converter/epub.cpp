@@ -116,13 +116,9 @@ int main() {
   auto file = std::make_shared<XHTMLFile>(
       "plik.xhtml",
       std::make_shared<Tag>(
-          "body",
-          children{std::make_shared<Tag>(
-              "h1", children{std::make_shared<Text>("dummy epub content")})}));
+          "body", children{std::make_shared<Header>("dummy epub content")}));
   auto nav = std::make_shared<Nav>(
-      toc,
-      std::make_shared<Tag>("h1",
-                            children{std::make_shared<Text>("spis treści")}),
+      toc, std::make_shared<Header>("spis treści"),
       std::make_shared<OrderedList>(
           std::vector<std::shared_ptr<ListItem>>{std::make_shared<ListItem>(
               std::make_shared<Anchor>("plik.xhtml", "pliczek"))}));

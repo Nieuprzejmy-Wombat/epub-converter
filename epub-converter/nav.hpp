@@ -30,9 +30,15 @@ public:
   ListItem(std::shared_ptr<Anchor> anchor);
 };
 
+class Header : public Tag {
+public:
+  Header(short level, std::string contents);
+  Header(std::string contents);
+};
+
 class Nav : public Tag {
 public:
-  Nav(NavType type, std::shared_ptr<Tag> title,
+  Nav(NavType type, std::shared_ptr<Header> title,
       std::shared_ptr<OrderedList> list);
 };
 
