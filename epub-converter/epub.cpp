@@ -75,13 +75,11 @@ PackageFile::PackageFile(std::shared_ptr<Metadata> metadata, XHTMLFile &nav,
               children{
                   metadata,
                   std::make_shared<Tag>(
-                      "manifest", upcast<std::shared_ptr<ManifestItem>,
-                                         std::shared_ptr<AbstractTag>>(add(
+                      "manifest", upcast<std::shared_ptr<AbstractTag>>(add(
                                       manifest, std::make_shared<ManifestItem>(
                                                     "nav", nav, true)))),
                   std::make_shared<Tag>(
-                      "spine", upcast<std::shared_ptr<SpineItem>,
-                                      std::shared_ptr<AbstractTag>>(spine))})) {
+                      "spine", upcast<std::shared_ptr<AbstractTag>>(spine))})) {
 }
 
 Content::Content(std::shared_ptr<PackageFile> package,

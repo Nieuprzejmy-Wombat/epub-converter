@@ -37,12 +37,9 @@ ListItem::ListItem(std::shared_ptr<Anchor> anchor) : Tag("li", {anchor}) {};
 
 OrderedList::OrderedList(std::map<std::string, std::string> attributes,
                          std::vector<std::shared_ptr<ListItem>> items)
-    : Tag("ol", attributes,
-          upcast<std::shared_ptr<ListItem>, std::shared_ptr<AbstractTag>>(
-              items)) {};
+    : Tag("ol", attributes, upcast<std::shared_ptr<AbstractTag>>(items)) {};
 OrderedList::OrderedList(std::vector<std::shared_ptr<ListItem>> items)
-    : Tag("ol", upcast<std::shared_ptr<ListItem>, std::shared_ptr<AbstractTag>>(
-                    items)) {};
+    : Tag("ol", upcast<std::shared_ptr<AbstractTag>>(items)) {};
 
 Header::Header(short level, std::string contents)
     : Tag("h" + std::to_string(level), {std::make_shared<Text>(contents)}) {};
