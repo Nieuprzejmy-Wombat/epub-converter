@@ -10,14 +10,14 @@ std::ostream &operator<<(std::ostream &stream, const AbstractTag &tag) {
   return stream << tag.to_string();
 }
 
-Tag::Tag(const std::string name, std::map<std::string, std::string> attributes,
-         std::vector<AbstractTag *> children)
+Tag::Tag(std::string name, std::map<std::string, std::string> attributes,
+         std::vector<std::shared_ptr<AbstractTag>> children)
     : m_name{name}, m_attributes{attributes}, m_children{children} {};
 
-Tag::Tag(const std::string name, std::vector<AbstractTag *> children)
+Tag::Tag(std::string name, std::vector<std::shared_ptr<AbstractTag>> children)
     : m_name{name}, m_attributes{}, m_children{children} {};
 
-Tag::Tag(const std::string name, std::map<std::string, std::string> attributes)
+Tag::Tag(std::string name, std::map<std::string, std::string> attributes)
     : m_name{name}, m_attributes{attributes}, m_children{} {};
 
 std::string Tag::to_string() const {

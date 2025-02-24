@@ -19,18 +19,21 @@ class ListItem;
 class OrderedList : public Tag {
 public:
   OrderedList(std::map<std::string, std::string> attributes = {},
-              std::vector<ListItem *> items = {});
-  OrderedList(std::vector<ListItem *> items);
+              std::vector<std::shared_ptr<ListItem>> items = {});
+  OrderedList(std::vector<std::shared_ptr<ListItem>> items);
 };
 
 class ListItem : public Tag {
 public:
-  ListItem(Anchor *anchor, OrderedList *nested_list = nullptr);
+  ListItem(std::shared_ptr<Anchor> anchor,
+           std::shared_ptr<OrderedList> nested_list);
+  ListItem(std::shared_ptr<Anchor> anchor);
 };
 
 class Nav : public Tag {
 public:
-  Nav(NavType type, Tag *title, OrderedList *list);
+  Nav(NavType type, std::shared_ptr<Tag> title,
+      std::shared_ptr<OrderedList> list);
 };
 
 #endif

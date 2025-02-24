@@ -2,6 +2,7 @@
 #define EPUB_HPP
 
 #include "filesystem.hpp"
+#include <memory>
 
 class ContainerFile : public XMLFile {
 public:
@@ -10,7 +11,8 @@ public:
 
 class Meta : public Folder {
 public:
-  Meta(ContainerFile *container = new ContainerFile{});
+  Meta(std::shared_ptr<ContainerFile> container =
+           std::make_shared<ContainerFile>());
 };
 
 class ManifestItem : public Tag {
@@ -26,14 +28,15 @@ public:
 class PackageFile : public XMLFile {
 public:
   PackageFile(std::string id, std::string title, std::string creator,
-              std::string language, XHTMLFile *nav,
-              std::vector<ManifestItem *> manifest,
-              std::vector<SpineItem *> spine);
+              std::string language, XHTMLFile &nav,
+              std::vector<std::shared_ptr<ManifestItem>> manifest,
+              std::vector<std::shared_ptr<SpineItem>> spine);
 };
 
 class Content : public Folder {
 public:
-  Content(PackageFile *package, std::vector<FileSystemResource *> content);
+  Content(std::shared_ptr<PackageFile> package,
+          std::vector<std::shared_ptr<FileSystemResource>> content);
 };
 
 class Epub : File {

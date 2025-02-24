@@ -1,20 +1,19 @@
 #ifndef UTIL_HPP
 #define UTIL_HPP
 
-#include "tag.hpp"
+#include <memory>
 #include <string>
 #include <vector>
 
 std::string now();
 
-template <typename T> std::vector<T *> &add(std::vector<T *> &vec, T *elem) {
+template <typename T> std::vector<T> &add(std::vector<T> &vec, T elem) {
   vec.push_back(elem);
   return vec;
 }
 
-template <typename T>
-std::vector<AbstractTag *> upcast(std::vector<T *> items) {
-  std::vector<AbstractTag *> res;
+template <typename T, typename U> std::vector<U> upcast(std::vector<T> items) {
+  std::vector<U> res;
   for (auto it : items) {
     res.push_back(it);
   }

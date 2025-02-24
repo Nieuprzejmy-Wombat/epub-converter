@@ -1,10 +1,12 @@
 #include "epub.hpp"
 #include "filesystem.hpp"
 #include "nav.hpp"
+#include "tag.hpp"
 #include "util.hpp"
 #include <cstdio>
 #include <cstdlib>
 #include <map>
+#include <memory>
 #include <string>
 
 // Michaił Bachtin
@@ -12,17 +14,22 @@
 ContainerFile::ContainerFile()
     : XMLFile(
           "META-INF/container.xml",
-          new Tag("container",
-                  {{"xmlns", "urn:oasis:names:tc:opendocument:xmlns:container"},
-                   {"version", "1.0"}},
-                  {new Tag("rootfiles",
-                           {new Tag("rootfile",
-                                    {{"full-path", "EPUB/package.opf"},
-                                     {"media-type",
-                                      "application/oebps-package+xml"}})})})) {
+          std::make_shared<Tag>(
+              "container",
+              attrs{
+                  {"xmlns", "urn:oasis:names:tc:opendocument:xmlns:container"},
+                  {"version", "1.0"}},
+              children{std::make_shared<Tag>(
+                  "rootfiles",
+                  children{std::make_shared<Tag>(
+                      "rootfile", std::map<std::string, std::string>{
+                                      {"full-path", "EPUB/package.opf"},
+                                      {"media-type",
+                                       "application/oebps-package+xml"}})})})) {
       };
 
-Meta::Meta(ContainerFile *container) : Folder{"META-INF", {container}} {};
+Meta::Meta(std::shared_ptr<ContainerFile> container)
+    : Folder{"META-INF", {container}} {};
 
 // properties??
 ManifestItem::ManifestItem(std::string id, ContentFile &file, bool is_nav)
@@ -38,34 +45,52 @@ ManifestItem::ManifestItem(std::string id, ContentFile &file, bool is_nav)
 SpineItem::SpineItem(std::string id) : Tag("itemref", {{"idref", id}}) {};
 
 PackageFile::PackageFile(std::string id, std::string title, std::string creator,
-                         std::string language, XHTMLFile *nav,
-                         std::vector<ManifestItem *> manifest,
-                         std::vector<SpineItem *> spine)
+                         std::string language, XHTMLFile &nav,
+                         std::vector<std::shared_ptr<ManifestItem>> manifest,
+                         std::vector<std::shared_ptr<SpineItem>> spine)
     : XMLFile(
           "EPUB/package.opf",
-          new Tag("package",
-                  {{"xmlns", "http://www.idpf.org/2007/opf"},
-                   {"version", "3.0"},
-                   {"unique-identifier", "uid"}},
-                  {new Tag("metadata",
-                           {{"xmlns:dc", "http://purl.org/dc/elements/1.1/"}},
-                           {new Tag("dc:identifier", {{"id", "uid"}},
-                                    {new Text(id)}),
-                            new Tag("dc:title", {new Text(title)}),
-                            new Tag("dc:creator", {new Text(creator)}),
-                            new Tag("dc:language", {new Text(language)}),
-                            new Tag("meta", {{"property", "dcterms:modified"}},
-                                    {new Text(now())})}),
-                   new Tag("manifest",
-                           upcast(add(manifest,
-                                      new ManifestItem("nav", *nav, true)))),
-                   new Tag("spine", upcast(spine))})) {}
+          std::make_shared<Tag>(
+              "package",
+              attrs{{"xmlns", "http://www.idpf.org/2007/opf"},
+                    {"version", "3.0"},
+                    {"unique-identifier", "uid"}},
+              children{
+                  std::make_shared<Tag>(
+                      "metadata",
+                      attrs{{"xmlns:dc", "http://purl.org/dc/elements/1.1/"}},
+                      children{
+                          std::make_shared<Tag>(
+                              "dc:identifier",
+                              std::map<std::string, std::string>{{"id", "uid"}},
+                              children{std::make_shared<Text>(id)}),
+                          std::make_shared<Tag>(
+                              "dc:title",
+                              children{std::make_shared<Text>(title)}),
+                          std::make_shared<Tag>(
+                              "dc:creator",
+                              children{std::make_shared<Text>(creator)}),
+                          std::make_shared<Tag>(
+                              "dc:language",
+                              children{std::make_shared<Text>(language)}),
+                          std::make_shared<Tag>(
+                              "meta", attrs{{"property", "dcterms:modified"}},
+                              children{std::make_shared<Text>(now())})}),
+                  std::make_shared<Tag>(
+                      "manifest", upcast<std::shared_ptr<ManifestItem>,
+                                         std::shared_ptr<AbstractTag>>(add(
+                                      manifest, std::make_shared<ManifestItem>(
+                                                    "nav", nav, true)))),
+                  std::make_shared<Tag>(
+                      "spine", upcast<std::shared_ptr<SpineItem>,
+                                      std::shared_ptr<AbstractTag>>(spine))})) {
+}
 
-Content::Content(PackageFile *package,
-                 std::vector<FileSystemResource *> content)
-    : Folder{"EPUB", content} {
-  m_files.push_back(package);
-};
+Content::Content(std::shared_ptr<PackageFile> package,
+                 std::vector<std::shared_ptr<FileSystemResource>> content)
+    : Folder{"EPUB",
+             add(content,
+                 static_cast<std::shared_ptr<FileSystemResource>>(package))} {};
 
 Epub::Epub(std::string path, Meta meta, Content content)
     : File{path}, m_meta{meta}, m_content{content} {};
@@ -88,16 +113,27 @@ std::string Epub::contents() { return ""; }
 
 int main() {
   Meta meta{};
-  XHTMLFile *file = new XHTMLFile{
+  auto file = std::make_shared<XHTMLFile>(
       "plik.xhtml",
-      new Tag("body", {new Tag("h1", {new Text("dummy epub content")})})};
-  Nav *nav = new Nav(
-      toc, new Tag("h1", {new Text("spis treści")}),
-      new OrderedList({new ListItem(new Anchor("plik.xhtml", "pliczek"))}));
-  XHTMLFile *nav_file = new XHTMLFile("nav.xhtml", new Tag("body", {nav}));
-  PackageFile *package =
-      new PackageFile("1", "tytuł", "autor", "pl", nav_file,
-                      {new ManifestItem("ttl", *file)}, {new SpineItem("ttl")});
+      std::make_shared<Tag>(
+          "body",
+          children{std::make_shared<Tag>(
+              "h1", children{std::make_shared<Text>("dummy epub content")})}));
+  auto nav = std::make_shared<Nav>(
+      toc,
+      std::make_shared<Tag>("h1",
+                            children{std::make_shared<Text>("spis treści")}),
+      std::make_shared<OrderedList>(
+          std::vector<std::shared_ptr<ListItem>>{std::make_shared<ListItem>(
+              std::make_shared<Anchor>("plik.xhtml", "pliczek"))}));
+  auto nav_file = std::make_shared<XHTMLFile>(
+      "nav.xhtml", std::make_shared<Tag>("body", children{nav}));
+  auto package = std::make_shared<PackageFile>(
+      "1", "tytuł", "autor", "pl", *nav_file,
+      std::vector<std::shared_ptr<ManifestItem>>{
+          std::make_shared<ManifestItem>("ttl", *file)},
+      std::vector<std::shared_ptr<SpineItem>>{
+          std::make_shared<SpineItem>("ttl")});
   Content content{package, {file, nav_file}};
   Epub epub{"test", meta, content};
   epub.write();

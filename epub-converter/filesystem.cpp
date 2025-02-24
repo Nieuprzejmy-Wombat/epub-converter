@@ -1,6 +1,7 @@
 #include "filesystem.hpp"
 #include "tag.hpp"
 #include <fstream>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,8 @@ void File::write() {
   stream.close();
 };
 
-Folder::Folder(std::string path, std::vector<FileSystemResource *> files)
+Folder::Folder(std::string path,
+               std::vector<std::shared_ptr<FileSystemResource>> files)
     : FileSystemResource{path}, m_files{files} {};
 
 void Folder::write() {
@@ -35,7 +37,7 @@ ContentFile::ContentFile(std::string path, std::string mimetype)
 
 const std::string &ContentFile::mimetype() { return m_mimetype; };
 
-XMLFile::XMLFile(std::string path, AbstractTag *body)
+XMLFile::XMLFile(std::string path, std::shared_ptr<AbstractTag> body)
     : File{path}, m_body{body} {};
 
 std::string XMLFile::contents() {
@@ -47,16 +49,20 @@ Link::Link(std::string href)
           {{"rel", "stylesheet"}, {"type", "text/css"}, {"href", href}}) {};
 
 // std::vector<Link *> stylesheets
-XHTMLFile::XHTMLFile(std::string path, AbstractTag *html_body)
+XHTMLFile::XHTMLFile(std::string path, std::shared_ptr<AbstractTag> html_body)
     : ContentFile{path},
-      m_body{new Tag("html",
-                     {{"xmlns", "http://www.w3.org/1999/xhtml"},
-                      {"xmlns:epub", "http://www.idpf.org/2007/ops"}},
-                     {new Tag("head",
-                              std::vector<AbstractTag *>{
-                                  new Tag("meta", {{"charset", "utf-8"}}),
-                                  new Tag("title", {new Text(path)})}),
-                      html_body})}
+      m_body{new Tag(
+          "html",
+          {{"xmlns", "http://www.w3.org/1999/xhtml"},
+           {"xmlns:epub", "http://www.idpf.org/2007/ops"}},
+          children{std::make_shared<Tag>(
+                       "head",
+                       children{std::make_shared<Tag>(
+                                    "meta", attrs{{"charset", "utf-8"}}),
+                                std::make_shared<Tag>(
+                                    "title",
+                                    children{std::make_shared<Text>(path)})}),
+                   html_body})}
 
 {};
 

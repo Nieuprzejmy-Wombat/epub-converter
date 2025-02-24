@@ -26,8 +26,9 @@ protected:
 
 class Folder : public FileSystemResource {
 protected:
-  std::vector<FileSystemResource *> m_files;
-  Folder(std::string path, std::vector<FileSystemResource *> files = {});
+  std::vector<std::shared_ptr<FileSystemResource>> m_files;
+  Folder(std::string path,
+         std::vector<std::shared_ptr<FileSystemResource>> files = {});
 
 public:
   virtual void write() override;
@@ -43,8 +44,8 @@ public:
 
 class XMLFile : public File {
 public:
-  AbstractTag *m_body;
-  XMLFile(std::string path, AbstractTag *body);
+  std::shared_ptr<AbstractTag> m_body;
+  XMLFile(std::string path, std::shared_ptr<AbstractTag> body);
   std::string contents() override;
 };
 
@@ -55,8 +56,8 @@ public:
 
 class XHTMLFile : public ContentFile {
 public:
-  AbstractTag *m_body;
-  XHTMLFile(std::string path, AbstractTag *html_body);
+  std::shared_ptr<AbstractTag> m_body;
+  XHTMLFile(std::string path, std::shared_ptr<AbstractTag> html_body);
   std::string contents() override;
 };
 
