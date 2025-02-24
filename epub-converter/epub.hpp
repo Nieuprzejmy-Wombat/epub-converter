@@ -18,7 +18,7 @@ public:
 
 class ManifestItem : public Tag {
 public:
-  ManifestItem(std::string id, ContentFile &file, bool is_nav = false);
+  ManifestItem(std::string id, const ContentFile &file, bool is_nav = false);
 };
 
 class SpineItem : public Tag {

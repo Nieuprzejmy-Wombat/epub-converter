@@ -32,10 +32,10 @@ Meta::Meta(std::shared_ptr<ContainerFile> container)
     : Folder{"META-INF", {container}} {};
 
 // properties??
-ManifestItem::ManifestItem(std::string id, ContentFile &file, bool is_nav)
+ManifestItem::ManifestItem(std::string id, const ContentFile &file, bool is_nav)
     : Tag("item", {{"href", file.filename()},
                    {"id", id},
-                   {"media-type", file.mimetype()}}) {
+                   {"media-type", file.m_mimetype}}) {
   if (is_nav) {
     m_attributes.insert({{"properties", "nav"}});
   }

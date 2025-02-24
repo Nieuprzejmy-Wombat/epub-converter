@@ -7,11 +7,6 @@
 
 FileSystemResource::FileSystemResource(std::string path) : m_path{path} {};
 
-std::string const FileSystemResource::filename() {
-  size_t split_pos = m_path.find_last_of("/");
-  return m_path.substr(split_pos + 1);
-};
-
 File::File(std::string path) : FileSystemResource{path} {};
 
 void File::write() {
@@ -19,6 +14,11 @@ void File::write() {
   stream.open(m_path);
   stream << contents();
   stream.close();
+};
+
+std::string File::filename() const {
+  size_t split_pos = m_path.find_last_of("/");
+  return m_path.substr(split_pos + 1);
 };
 
 Folder::Folder(std::string path,
@@ -34,8 +34,6 @@ void Folder::write() {
 
 ContentFile::ContentFile(std::string path, std::string mimetype)
     : File("EPUB/" + path), m_mimetype{mimetype} {};
-
-const std::string &ContentFile::mimetype() { return m_mimetype; };
 
 XMLFile::XMLFile(std::string path, std::shared_ptr<AbstractTag> body)
     : File{path}, m_body{body} {};

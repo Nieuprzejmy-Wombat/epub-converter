@@ -12,13 +12,13 @@ protected:
 public:
   std::string m_path;
   virtual void write() = 0;
-  std::string const filename();
 };
 
 class File : public FileSystemResource {
 public:
   virtual std::string contents() = 0;
   virtual void write() override;
+  std::string filename() const;
 
 protected:
   File(std::string path);
@@ -35,11 +35,9 @@ public:
 };
 
 class ContentFile : public File {
-  std::string m_mimetype;
-
 public:
   ContentFile(std::string path, std::string mimetype = "application/xhtml+xml");
-  const std::string &mimetype();
+  const std::string m_mimetype;
 };
 
 class XMLFile : public File {
