@@ -26,6 +26,7 @@ public:
   Tag(std::string name, std::vector<std::shared_ptr<AbstractTag>> children);
   Tag(std::string name, std::map<std::string, std::string> attributes = {});
   virtual std::string to_string() const override;
+  const std::map<std::string, std::string> &attributes() const;
 };
 
 class Text : public AbstractTag {

@@ -18,12 +18,13 @@ public:
 
 class ManifestItem : public Tag {
 public:
-  ManifestItem(std::string id, const ContentFile &file, bool is_nav = false);
+  ManifestItem(std::string id, const ContentFile &file,
+               std::string properties = "");
 };
 
 class SpineItem : public Tag {
 public:
-  SpineItem(std::string id);
+  SpineItem(const ManifestItem &item, bool linear = true);
 };
 
 class Metadata : public Tag {

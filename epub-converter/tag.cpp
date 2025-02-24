@@ -33,5 +33,9 @@ std::string Tag::to_string() const {
   return res + "</" + m_name + ">\n";
 };
 
+const std::map<std::string, std::string> &Tag::attributes() const {
+  return m_attributes;
+};
+
 Text::Text(const std::string contents) : m_contents{contents} {};
 std::string Text::to_string() const { return m_contents; };

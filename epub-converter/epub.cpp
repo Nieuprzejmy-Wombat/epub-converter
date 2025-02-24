@@ -31,18 +31,22 @@ ContainerFile::ContainerFile()
 Meta::Meta(std::shared_ptr<ContainerFile> container)
     : Folder{"META-INF", {container}} {};
 
-// properties??
-ManifestItem::ManifestItem(std::string id, const ContentFile &file, bool is_nav)
+ManifestItem::ManifestItem(std::string id, const ContentFile &file,
+                           std::string properties)
     : Tag("item", {{"href", file.filename()},
                    {"id", id},
                    {"media-type", file.m_mimetype}}) {
-  if (is_nav) {
-    m_attributes.insert({{"properties", "nav"}});
+  if (!properties.empty()) {
+    m_attributes.insert({{"properties", properties}});
   }
 };
 
-// linear??
-SpineItem::SpineItem(std::string id) : Tag("itemref", {{"idref", id}}) {};
+SpineItem::SpineItem(const ManifestItem &item, bool linear)
+    : Tag("itemref", {{"idref", item.attributes().at("id")}}) {
+  if (!linear) {
+    m_attributes.insert({"linear", "no"});
+  }
+};
 
 Metadata::Metadata(std::string id, std::string title, std::string creator,
                    std::string language, std::string time_modified)
@@ -77,7 +81,7 @@ PackageFile::PackageFile(std::shared_ptr<Metadata> metadata, XHTMLFile &nav,
                   std::make_shared<Tag>(
                       "manifest", upcast<std::shared_ptr<AbstractTag>>(add(
                                       manifest, std::make_shared<ManifestItem>(
-                                                    "nav", nav, true)))),
+                                                    "nav", nav, "nav")))),
                   std::make_shared<Tag>(
                       "spine", upcast<std::shared_ptr<AbstractTag>>(spine))})) {
 }
@@ -109,10 +113,13 @@ std::string Epub::contents() { return ""; }
 
 int main() {
   Meta meta{};
+
   auto file = std::make_shared<XHTMLFile>(
       "plik.xhtml",
       std::make_shared<Tag>(
           "body", children{std::make_shared<Header>("dummy epub content")}));
+  auto file_manifest = std::make_shared<ManifestItem>("ttl", *file);
+
   auto nav = std::make_shared<Nav>(
       toc, std::make_shared<Header>("spis treści"),
       std::make_shared<OrderedList>(
@@ -120,13 +127,14 @@ int main() {
               std::make_shared<Anchor>("plik.xhtml", "pliczek"))}));
   auto nav_file = std::make_shared<XHTMLFile>(
       "nav.xhtml", std::make_shared<Tag>("body", children{nav}));
+
   auto metadata = std::make_shared<Metadata>("1", "tytuł", "autor", "pl");
   auto package = std::make_shared<PackageFile>(
       metadata, *nav_file,
-      std::vector<std::shared_ptr<ManifestItem>>{
-          std::make_shared<ManifestItem>("ttl", *file)},
+      std::vector<std::shared_ptr<ManifestItem>>{file_manifest},
       std::vector<std::shared_ptr<SpineItem>>{
-          std::make_shared<SpineItem>("ttl")});
+          std::make_shared<SpineItem>(*file_manifest)});
+
   Content content{package, {file, nav_file}};
   Epub epub{"test", meta, content};
   epub.write();
