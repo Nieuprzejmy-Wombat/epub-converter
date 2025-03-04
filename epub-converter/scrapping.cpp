@@ -9,16 +9,16 @@ Either<std::string, Metadata> Default::operator()() {
   return new Metadata{m_metadata};
 };
 
-SingleFile::SingleFile(TextFile file,
-                       std::shared_ptr<ScrappingStrat<Metadata>> metadata_strat,
-                       std::shared_ptr<ScrappingStrat<Nav>> nav_strat)
+SingleFile::SingleFile(std::shared_ptr<ContentFile> file,
+                       ScrappingStrat<Metadata> &metadata_strat,
+                       ScrappingStrat<Nav> &nav_strat)
     : m_file{file}, m_metadata_strat{metadata_strat}, m_nav_strat{nav_strat} {};
 
 Either<std::string, Epub> SingleFile::operator()() {
   auto file_manifest =
-      std::make_shared<ManifestItem>(m_file.filename(), m_file);
+      std::make_shared<ManifestItem>(m_file->filename(), *m_file);
 
-  auto nav = (*m_nav_strat)();
+  auto nav = m_nav_strat();
   if (!nav.m_success) {
     return new std::string{"nav strategy failed with message: " + *nav.m_error};
   }
@@ -26,7 +26,7 @@ Either<std::string, Epub> SingleFile::operator()() {
       "nav.xhtml", std::make_shared<Tag>(
                        "body", children{std::shared_ptr<Nav>{nav.m_value}}));
 
-  auto metadata = (*m_metadata_strat)();
+  auto metadata = m_metadata_strat();
   if (!metadata.m_success) {
     return new std::string{"metadata strategy failed with message: " +
                            *metadata.m_error};
@@ -38,11 +38,14 @@ Either<std::string, Epub> SingleFile::operator()() {
       std::vector<std::shared_ptr<SpineItem>>{
           std::make_shared<SpineItem>(*file_manifest)});
 
-  Content content{package, {std::make_shared<TextFile>(m_file), nav_file}};
-  return new Epub{m_file.filename(), {}, content};
+  Content content{package, {m_file, nav_file}};
+  return new Epub{m_file->filename(), {}, content};
 };
 
 Either<std::string, Nav> Empty::operator()() {
-  return new Nav{toc, std::make_shared<Header>("Table of contents"),
-                 std::make_shared<OrderedList>()};
+  return new Nav{
+      toc, std::make_shared<Header>("Table of contents"),
+      std::make_shared<OrderedList>(
+          std::vector<std::shared_ptr<ListItem>>{std::make_shared<ListItem>(
+              std::make_shared<Anchor>("file", "title"))})};
 };

@@ -14,8 +14,8 @@ public:
     T *m_error;
     U *m_value;
   };
-  Either(T *error) : m_success{false}, m_error{error} {};
-  Either(U *value) : m_success{true}, m_value{value} {};
+  Either(T* error) : m_success{false}, m_error{error} {};
+  Either(U* value) : m_success{true}, m_value{value} {};
 };
 
 template <typename T> class ScrappingStrat {
@@ -49,14 +49,14 @@ public:
 };
 
 class SingleFile : public ScrappingStrat<Epub> {
-  TextFile m_file;
-  std::shared_ptr<ScrappingStrat<Metadata>> m_metadata_strat;
-  std::shared_ptr<ScrappingStrat<Nav>> m_nav_strat;
+  std::shared_ptr<ContentFile> m_file;
+  ScrappingStrat<Metadata> &m_metadata_strat;
+  ScrappingStrat<Nav> &m_nav_strat;
 
 public:
-  SingleFile(TextFile file,
-             std::shared_ptr<ScrappingStrat<Metadata>> metadata_strat,
-             std::shared_ptr<ScrappingStrat<Nav>> nav_strat);
+  SingleFile(std::shared_ptr<ContentFile> file,
+             ScrappingStrat<Metadata> &metadata_strat,
+             ScrappingStrat<Nav> &nav_strat);
   virtual Either<std::string, Epub> operator()() override;
 };
 
